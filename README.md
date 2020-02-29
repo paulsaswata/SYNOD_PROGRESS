@@ -1,6 +1,6 @@
 # SYNOD_PROGRESS 
 
-##### This repository contains the TLA+ specifications and TLAPS proofs for the proof of progress for the Synod algorithm
+##### This repository contains the TLA+ specification and the TLAPS proof of progress for the Synod algorithm
 
 ##### TLA+/TLAPS resources:
 * [TLA+](https://lamport.azurewebsites.net/tla/tla.html)
