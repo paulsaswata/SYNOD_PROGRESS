@@ -13,7 +13,7 @@ VARIABLES msgs,    \* The set of messages that have been sent.
           learnt, \* learnt[l] is the value learnt by the learner l          
           state_time \* time of the system state
           
-vars == <<msgs, maxBal, maxVBal, maxVal, state_time>>
+vars == <<msgs, maxBal, maxVBal, maxVal, learnt, state_time>>
 
 None == CHOOSE v : v \notin Values
 
@@ -1850,7 +1850,8 @@ Assumptions
     BY <1>7 DEF msgsPost2b
 <1>200. QED
    BY <1>8
-(***************************************************************************)
+
+
 LEMMA Theorem1 ==
 Assumptions 
 =>
@@ -1882,5 +1883,5 @@ Assumptions
 
 =============================================================================
 \* Modification History
-\* Last modified Sat Apr 11 20:32:11 EDT 2020 by pauls
+\* Last modified Sun Apr 12 13:32:37 EDT 2020 by pauls
 \* Created Thu Nov 14 15:15:40 EST 2019 by pauls
