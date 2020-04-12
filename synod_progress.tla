@@ -31,6 +31,9 @@ Ballots == Nat
 \* time is discrete logical time
 Time == Nat
 
+(***************************************************************************)
+(* Some temporal properties                                                *)
+(***************************************************************************)
 \* If all acceptors in a quorum have each delivered a message at separate times, 
 \* there will be a time when all acceptors in the quorum will have 
 \* each delivered the message at a lower time
@@ -156,7 +159,6 @@ TemporalProperty3 ==
 TemporalProperties == TemporalProperty1 
                    /\ TemporalProperty2 
                    /\ TemporalProperty3
------------------------------------------------------------------------------
 
 (***************************************************************************)
 (*Predicates for message sending and delivery                              *)
@@ -184,6 +186,7 @@ Send(m,t) ==
 
 Phase1a(p,b,t ) ==               
       /\ \E t2 \in Time : (t2 >= t 
+                        /\ (state_time' = t2)
                         /\ Send([type |-> "1a", prop |-> p, bal |-> b], t2))
       /\ UNCHANGED <<maxVBal, maxBal, maxVal>>
 
@@ -198,6 +201,7 @@ Phase1a(p,b,t ) ==
 (***************************************************************************)
 Phase1b(a,m,t) == 
  /\ \E t2 \in Time : ( t2 >= t
+                   /\ (state_time' = t2)
                    /\ Send([type |-> "1b", prop |-> m.prop, bal |-> m.bal, 
                            maxVBal |-> maxVBal[a], 
        maxVal |-> maxVal[a], acc |-> a], t2)
@@ -213,8 +217,9 @@ Phase1b(a,m,t) ==
 (* one 2a message for any ballot.                                          *)
 (***************************************************************************)
 Phase2a(p,b,v,t) ==
-/\ \E t2 \in Time : (t2 >= t /\ Send([type |-> "2a", prop |-> p, 
-                                      bal |-> b, val |-> v], t2))
+/\ \E t2 \in Time : (t2 >= t 
+                 /\ (state_time' = t2)
+                 /\ Send([type |-> "2a", prop |-> p, bal |-> b, val |-> v], t2))
 /\ UNCHANGED <<maxBal, maxVBal, maxVal>>
 (***************************************************************************)
 (* Phase 2b: If an acceptor receives a 2a message for a ballot numbered    *)
@@ -225,6 +230,7 @@ Phase2a(p,b,v,t) ==
 Phase2b(a,m,t) == 
     /\ \E t2 \in Time :
            ( t2 >= t
+             /\ (state_time' = t2)
              /\ Send([type |-> "2b", prop |-> m.prop, bal |-> m.bal, 
                       val |-> m.val, acc |-> a], t2)
              /\ maxVBal' = [maxVBal EXCEPT ![a] = m.bal]
@@ -239,6 +245,7 @@ Phase2b(a,m,t) ==
 Learning(l,v,t) == 
     /\ \E t2 \in Time :
            ( t2 >= t
+             /\ (state_time' = t2)
              /\ learnt' = [learnt EXCEPT ![l] = v]) 
                             
 (***************************************************************************)
@@ -252,7 +259,7 @@ Messages ==    [type : {"1a"}, prop : Proposers, bal : Ballots, dTime : Time]
                   val : Values, dTime : Time]
             \cup [type : {"2b"}, prop : Proposers, bal : Ballots, 
                   val : Values, acc : Acceptors, dTime : Time]       
------------------------------------------------------------------------------
+
 
 (***************************************************************************)
 (*  The following section specifies rules and predicates that define       *)
@@ -427,7 +434,7 @@ Acceptor_behaviour ==
 Learner_behaviour == 
 (\A l \in Learners : Always_available(l)  =>  Rule_learner(l))  
                                                     
------------------------------------------------------------------------------                      
+                    
 (***************************************************************************)
 (*The following section specifies assumptions for proving progress         *)
 (***************************************************************************)
@@ -540,7 +547,6 @@ HighestAssertions ==
                      /\ HighestProposerAssertion1
                      /\ HighestProposerAssertion2
 
------------------------------------------------------------------------------
 
 \*The highest proposer is always available
 Highest_prop_always_available == 
@@ -1857,11 +1863,13 @@ Assumptions
 =>
 (
 (\E v \in Values : \E l \in Learners : \E t \in Time : 
-                                          learnt' = [learnt EXCEPT ![l] = v])
+                                          (state_time' = t)
+                                       /\ learnt' = [learnt EXCEPT ![l] = v])
 )
 <1> SUFFICES ASSUME Assumptions
              PROVE (\E t \in Time : \E v \in Values : \E l \in Learners : 
-                                          learnt' = [learnt EXCEPT ![l] = v])
+                                          (state_time' = t)       
+                                       /\ learnt' = [learnt EXCEPT ![l] = v])
     OBVIOUS    
 <1>1. \E v \in Values : \E Q \in Quorums : 
                 \A a \in Q : (\E m \in msgs : (m.type = "2b") 
@@ -1875,7 +1883,8 @@ Assumptions
 <1>4. \E v \in Values : \E l \in Learners : \E t \in Time : Learning(l,v,t)
    BY <1>1, <1>3 DEF Rule_learner  
 <1>5. (\E v \in Values : \E l \in Learners : \E t \in Time : 
-                                          learnt' = [learnt EXCEPT ![l] = v])
+                                          (state_time' = t) 
+                                       /\ learnt' = [learnt EXCEPT ![l] = v])
    BY <1>4 DEF Learning        
 <1>200. QED
    BY <1>5  
@@ -1883,5 +1892,5 @@ Assumptions
 
 =============================================================================
 \* Modification History
-\* Last modified Sun Apr 12 13:32:37 EDT 2020 by pauls
+\* Last modified Sun Apr 12 19:15:08 EDT 2020 by pauls
 \* Created Thu Nov 14 15:15:40 EST 2019 by pauls
