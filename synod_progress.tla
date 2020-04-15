@@ -1153,7 +1153,7 @@ LEMMA Lemma3 ==
                     
 
                      
-\* Theorem - If a proposer proposes the highest ballot and "1a" messages from it have been delivered
+\* Lemma - If a proposer proposes the highest ballot and "1a" messages from it have been delivered
 \* and it has not yet received any "1b" message, it will eventually receive "1b" messages from a 
 \* quorum of acceptors                   
 THEOREM Lemma4 ==
@@ -1382,7 +1382,7 @@ THEOREM Lemma4 ==
 <1>200. QED
    BY <1>7  
 
-\* Theorem - If a proposer proposes the highest ballot and has received "1b" messages from a quorum 
+\* Lemma - If a proposer proposes the highest ballot and has received "1b" messages from a quorum 
 \* for its proposal number and "2a" messages from it have been delivered
 \* it will eventually receive "2b" messages from a quorum of acceptors 
 THEOREM Lemma5 ==
@@ -1484,7 +1484,7 @@ THEOREM Lemma5 ==
     BY <1>6, Lemma3       
 
 
-----------------------------------------------------------------------------
+
 (***************************************************************************)
 (*The intermediate states                                                  *)
 (***************************************************************************)
@@ -1857,7 +1857,7 @@ Assumptions
 <1>200. QED
    BY <1>8
 
-
+\* Eventually a learner will learn a value
 LEMMA Theorem1 ==
 Assumptions 
 =>
@@ -1892,5 +1892,5 @@ Assumptions
 
 =============================================================================
 \* Modification History
-\* Last modified Sun Apr 12 19:15:08 EDT 2020 by pauls
+\* Last modified Wed Apr 15 13:42:57 EDT 2020 by pauls
 \* Created Thu Nov 14 15:15:40 EST 2019 by pauls
