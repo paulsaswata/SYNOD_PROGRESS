@@ -271,17 +271,11 @@ Available(x,t) == TRUE \/ FALSE
 Always_available(x) == \A t \in Time : Available(x,t)
 
 \* Always Eventually Available
-\*Always_eventually_available(x) == 
- \*\A t \in Time : \E t2 \in Time : (t2 >= t /\ Available(x,t2) )
+Always_eventually_available(x) == 
+ \A t \in Time : \E t2 \in Time : (t2 >= t /\ Available(x,t2) )
 
-\*All proposers are always available
-All_proposers_always_available ==  \A p \in Proposers : Always_available(p)
 
-\* A specific quorum is always available
-Quorum_always_available == \E Q \in Quorums : \A a \in Q : Always_available(a)
 
-\* A learner is always available
-Learner_always_available == \E l \in Learners : Always_available(l)
 
 
 \* Rules that govern when an action can happen
@@ -442,7 +436,12 @@ Learner_behaviour ==
 (***************************************************************************)
 (*The following section specifies assumptions for proving progress         *)
 (***************************************************************************)
-            
+
+\* A specific quorum is always available
+Quorum_always_available == \E Q \in Quorums : \A a \in Q : Always_available(a)
+
+\* A learner is always available
+Learner_always_available == \E l \in Learners : Always_available(l)
 
 \*A message that is eventually sent is eventually Delivered
 aDelivery == 
@@ -1254,16 +1253,6 @@ THEOREM Lemma4 ==
            BY <2>2 DEF aTypeOk
       <2>5. \E Q \in Quorums : \A a \in Q : Always_available(a) /\ a \in Acceptors
            BY <2>3, <2>4 DEF Quorum_always_available
-(*----------------------------------------------------------------------------
-     <2>5. \E Q \in Quorums : \A a \in Q : Always_available(a)
-          BY <2>2 DEF aAvailability, Quorum_always_available 
-     <2>5a. \E Q \in Quorums : \A a \in Q : \A t \in Time : Available(a,t)
-          BY <2>5 DEF Always_available          
-     <2>5b. \A t \in Time : \E Q \in Quorums : \A a \in Q : Available(a,t)
-          BY <2>5a          
-     <2>6. \A t \in Time : \E Q \in Quorums : \A a \in Q : Rule_2b_msg(a)     
-          BY <2>5b, <2>4, <2>3 DEF aBehavior, Acceptor_behaviour       
----------------------------------------------------------------------------- *)
       <2>6. \E t \in Time : state_time = t
           /\ \E b \in Ballots : 
              \E Q \in Quorums : \A a2 \in Q : \E m1 \in msgs : m1.type = "1a" 
@@ -1939,5 +1928,5 @@ Assumptions
 
 =============================================================================
 \* Modification History
-\* Last modified Sat Apr 25 12:48:11 EDT 2020 by pauls
+\* Last modified Sat Apr 25 13:39:12 EDT 2020 by pauls
 \* Created Thu Nov 14 15:15:40 EST 2019 by pauls
