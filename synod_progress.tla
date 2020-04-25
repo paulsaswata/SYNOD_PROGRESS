@@ -270,6 +270,10 @@ Available(x,t) == TRUE \/ FALSE
 \*Always Available
 Always_available(x) == \A t \in Time : Available(x,t)
 
+\* Always Eventually Available
+\*Always_eventually_available(x) == 
+ \*\A t \in Time : \E t2 \in Time : (t2 >= t /\ Available(x,t2) )
+
 \*All proposers are always available
 All_proposers_always_available ==  \A p \in Proposers : Always_available(p)
 
@@ -427,12 +431,12 @@ Proposer_behaviour ==
 
 \*An acceptor's expected behavior
 Acceptor_behaviour == 
-(\A a \in Acceptors : Always_available(a)  => /\ Rule_1b_msg(a)  
-                                              /\ Rule_2b_msg(a) ) 
+(\A a \in Acceptors : (\E t \in Time : Available(a,t))  => /\ Rule_1b_msg(a)  
+                                                           /\ Rule_2b_msg(a) ) 
                                               
 \*A learner's expected behavior
 Learner_behaviour == 
-(\A l \in Learners : Always_available(l)  =>  Rule_learner(l))  
+(\A l \in Learners : (\E t \in Time : Available(l,t))  =>  Rule_learner(l))  
                                                     
                     
 (***************************************************************************)
@@ -948,7 +952,8 @@ LEMMA Lemma3 ==
                              (m.type = "2b") /\ (m.val = v) /\ (m.acc = a))))
 )
 <1> SUFFICES ASSUME NEW P1 \in Proposers,
-                        (\E b \in Ballots : 
+                        (\E t \in Time : state_time = t
+                          /\ \E b \in Ballots : 
                           (\E Q \in Quorums : \A a \in Q : 
                                                 \E m \in msgs : (m.type = "1b") 
                                                              /\ (m.bal = b) 
@@ -970,7 +975,8 @@ LEMMA Lemma3 ==
                                                              /\ (m.val = v) 
                                                              /\ (m.acc = a))))
     OBVIOUS         
-<1>1. \E b \in Ballots : 
+<1>1. \E t \in Time : state_time = t
+           /\ \E b \in Ballots : 
                       /\ (\E Q \in Quorums : \A a \in Q : 
                                              \E m \in msgs :  (m.type = "1b") 
                                                            /\ (m.bal = b) 
@@ -1001,9 +1007,14 @@ LEMMA Lemma3 ==
           BY <2>2 DEF aTypeOk
      <2>5. \E Q \in Quorums : \A a \in Q : Always_available(a)
           BY <2>2 DEF aAvailability, Quorum_always_available 
-     <2>6. \E Q \in Quorums : \A a \in Q : Rule_2b_msg(a)
-          BY <2>3, <2>4, <2>5 DEF aBehavior, Acceptor_behaviour 
-     <2>7. \E b \in Ballots : 
+     <2>5a. \E Q \in Quorums : \A a \in Q : \A t \in Time : Available(a,t)
+          BY <2>5 DEF Always_available          
+     <2>5b. \A t \in Time : \E Q \in Quorums : \A a \in Q : Available(a,t)
+          BY <2>5a          
+     <2>6. \A t \in Time : \E Q \in Quorums : \A a \in Q : Rule_2b_msg(a)
+          BY <2>5b, <2>4, <2>3 DEF aBehavior, Acceptor_behaviour 
+     <2>7.\E t \in Time : state_time = t 
+          /\ \E b \in Ballots : 
                           /\ \E v \in Values : (\E m \in msgs : (m.type = "2a") 
                                                              /\ (m.prop = P1) 
                                                              /\ (m.bal = b) 
@@ -1206,7 +1217,8 @@ THEOREM Lemma4 ==
 <1>3a. aPropLimit /\ aTypeOk 
      BY DEF Assumptions                             
 <1>4.      /\ HighestProposer(P)
-              /\ \E b \in Ballots :
+              /\\E t \in Time : state_time = t
+                 /\ \E b \in Ballots :
                   (/\ (\E m \in msgs : m.type = "1a" /\ m.prop = P /\ m.bal = b)
                   /\ (~(\E m2\in msgs : m2.type = "1b" /\ m2.prop = P /\ m2.bal = b)))
                   /\ (\A a \in Acceptors : \E m1 \in msgs : m1.type = "1a" 
@@ -1214,10 +1226,11 @@ THEOREM Lemma4 ==
                                                          /\ m1.bal = b 
                                                          /\ maxBal[a]<b)
     BY <1>3, <1>2    
-<1>4a. \E b \in Ballots : \A a \in Acceptors : \E m1 \in msgs : m1.type = "1a" 
-                                                             /\ m1.prop = P 
-                                                             /\ m1.bal = b 
-                                                             /\ maxBal[a]<m1.bal
+<1>4a. \E t \in Time : state_time = t
+       /\ \E b \in Ballots : \A a \in Acceptors : \E m1 \in msgs : m1.type = "1a" 
+                                                                /\ m1.prop = P 
+                                                                /\ m1.bal = b 
+                                                                /\ maxBal[a]<m1.bal
     BY <1>4
 <1>5. ASSUME (~(\E t \in Time : state_time' = t 
                              /\ \E b \in Ballots : 
@@ -1227,10 +1240,11 @@ THEOREM Lemma4 ==
                                                               /\ (m.acc = a) 
                                                               /\ (m.bal = b)))))
       PROVE FALSE
-      <2>1.\E b \in Ballots : \A a \in Acceptors : \E m1 \in msgs : m1.type = "1a" 
-                                                                 /\ m1.prop = P 
-                                                                 /\ m1.bal = b 
-                                                                 /\ maxBal[a]<m1.bal
+      <2>1. \E t \in Time : state_time = t
+       /\ \E b \in Ballots : \A a \in Acceptors : \E m1 \in msgs : m1.type = "1a" 
+                                                                /\ m1.prop = P 
+                                                                /\ m1.bal = b 
+                                                                /\ maxBal[a]<m1.bal
           BY <1>4a
       <2>2. aDelivery /\ aBehavior /\ aAvailability /\ aTypeOk 
            BY DEF Assumptions
@@ -1240,7 +1254,18 @@ THEOREM Lemma4 ==
            BY <2>2 DEF aTypeOk
       <2>5. \E Q \in Quorums : \A a \in Q : Always_available(a) /\ a \in Acceptors
            BY <2>3, <2>4 DEF Quorum_always_available
-      <2>6. \E b \in Ballots : 
+(*----------------------------------------------------------------------------
+     <2>5. \E Q \in Quorums : \A a \in Q : Always_available(a)
+          BY <2>2 DEF aAvailability, Quorum_always_available 
+     <2>5a. \E Q \in Quorums : \A a \in Q : \A t \in Time : Available(a,t)
+          BY <2>5 DEF Always_available          
+     <2>5b. \A t \in Time : \E Q \in Quorums : \A a \in Q : Available(a,t)
+          BY <2>5a          
+     <2>6. \A t \in Time : \E Q \in Quorums : \A a \in Q : Rule_2b_msg(a)     
+          BY <2>5b, <2>4, <2>3 DEF aBehavior, Acceptor_behaviour       
+---------------------------------------------------------------------------- *)
+      <2>6. \E t \in Time : state_time = t
+          /\ \E b \in Ballots : 
              \E Q \in Quorums : \A a2 \in Q : \E m1 \in msgs : m1.type = "1a" 
                                                             /\ m1.prop = P 
                                                             /\ maxBal[a2]<m1.bal 
@@ -1248,7 +1273,8 @@ THEOREM Lemma4 ==
                                                             /\ Always_available(a2) 
                                                             /\ a2 \in Acceptors
            BY <2>5, <2>1
-      <2>7. \E b \in Ballots : 
+      <2>7. \E t \in Time : state_time = t
+            /\ \E b \in Ballots : 
              \E Q \in Quorums : 
               \A a2 \in Q : \E m1 \in msgs : m1.type = "1a" 
                                           /\ m1.prop = P 
@@ -1256,40 +1282,44 @@ THEOREM Lemma4 ==
                                           /\ m1.bal = b 
                                           /\ Always_available(a2) /\ a2 \in Acceptors
            BY <2>6
-      <2>8. \E b \in Ballots : 
+      <2>8. \E t \in Time : state_time = t
+           /\ \E b \in Ballots : 
              \E Q \in Quorums : 
               \A a2 \in Q : 
                \E m1 \in msgs : m1.type = "1a" 
                              /\ m1.prop = P 
                              /\ m1.bal = b 
                              /\ maxBal[a2]<m1.bal 
-                             /\ Always_available(a2) /\ a2 \in Acceptors                                                       
-           BY <2>7
-      <2>8a. Acceptor_behaviour
+                             /\ Available(a2,t) /\ a2 \in Acceptors                                                       
+           BY <2>7 DEF Always_available
+      <2>8a. Acceptor_behaviour 
            BY <2>2 DEF aBehavior 
-      <2>8b.(\A a \in Acceptors : Always_available(a)  => /\ Rule_1b_msg(a)  \*behavior
-                                                          /\ Rule_2b_msg(a) )
+      <2>8b. (\A a \in Acceptors : (\E t \in Time : Available(a,t))  => /\ Rule_1b_msg(a)  
+                                                                       /\ Rule_2b_msg(a) )
            BY <2>8a DEF Acceptor_behaviour          
-      <2>9. \E b \in Ballots : \E Q \in Quorums : \A a2 \in Q : 
+      <2>9. \E t \in Time : state_time = t
+            /\ \E b \in Ballots : \E Q \in Quorums : \A a2 \in Q : 
                      \E m1 \in msgs : m1.type = "1a" /\ m1.prop = P /\ m1.bal = b 
                                     /\ maxBal[a2]<m1.bal 
-                                    /\ Always_available(a2)
+                                    /\Available(a2,t) /\ a2 \in Acceptors 
                                     /\ Rule_1b_msg(a2)                                                        
            BY <2>8, <2>4, <2>8b
-      <2>10. \E b \in Ballots : \E Q \in Quorums : \A a2 \in Q : 
+      <2>10. \E t \in Time : state_time = t
+            /\ \E b \in Ballots : \E Q \in Quorums : \A a2 \in Q : 
                      \E m1 \in msgs : m1.type = "1a" /\ m1.prop = P /\ m1.bal = b  
                                     /\ maxBal[a2]<m1.bal 
-                                    /\ Always_available(a2)
+                                    /\ Available(a2,t) /\ a2 \in Acceptors 
                                     /\ General_1b_msg(a2)                                                                   
            BY <2>9 DEF Rule_1b_msg
       <2>10a. msgs \in SUBSET Messages
            BY DEF Assumptions, aTypeOk
       <2>10b. \A m \in msgs :m.bal \in Nat
            BY <2>10a DEF Messages, Ballots     
-      <2>11. \E b \in Ballots : \E Q \in Quorums : \A a2 \in Q : 
+      <2>11. \E t \in Time : state_time = t
+            /\ \E b \in Ballots : \E Q \in Quorums : \A a2 \in Q : 
                      \E m1 \in msgs : m1.type = "1a" /\ m1.prop = P /\ m1.bal = b 
                                     /\ m1.bal>maxBal[a2] 
-                                    /\ Always_available(a2)
+                                    /\ Available(a2,t) /\ a2 \in Acceptors 
                                     /\ General_1b_msg(a2)                                                                   
            BY <2>10, <2>10b DEF Nat           
       <2>11a. (\E b \in Ballots : \E Q \in Quorums : \A a2 \in Q : 
@@ -1299,10 +1329,11 @@ THEOREM Lemma4 ==
                      \E m1 \in msgs : m1.type = "1a" /\ m1.prop = P 
                                    /\ m1.bal = b /\ m1.bal>maxBal[a2])            
            OBVIOUS          
-      <2>12. \E b \in Ballots : \E Q \in Quorums : \A a2 \in Q : 
+      <2>12.\E t \in Time : state_time = t
+            /\ \E b \in Ballots : \E Q \in Quorums : \A a2 \in Q : 
                      \E m1 \in msgs : m1.type = "1a" /\ m1.prop = P /\ m1.bal = b 
                                     /\ m1.bal>maxBal[a2] 
-                                    /\ Always_available(a2)
+                                    /\ Available(a2,t) /\ a2 \in Acceptors 
                                     /\ \E t1 \in Time : Phase1b(a2,m1,t1)
            BY <2>11, <2>11a DEF  General_1b_msg                                                                            
       <2>13. \E b \in Ballots : \E Q \in Quorums : \A a2 \in Q : 
@@ -1871,17 +1902,33 @@ Assumptions
                                           (state_time' = t)       
                                        /\ learnt' = [learnt EXCEPT ![l] = v])
     OBVIOUS    
-<1>1. \E v \in Values : \E Q \in Quorums : 
+<1>1. \E t \in Time : state_time = t  
+              /\ \E v \in Values : \E Q \in Quorums : 
                 \A a \in Q : (\E m \in msgs : (m.type = "2b") 
                                            /\ (m.val = v) 
                                            /\ (m.acc = a)) 
    BY Lemma9 DEF msgsPost2b
 <1>2. \E l \in Learners : Always_available(l)
    BY DEF Assumptions, aAvailability, Learner_always_available
-<1>3. \E l \in Learners : Rule_learner(l)
-   BY <1>2 DEF Assumptions, aBehavior, Learner_behaviour       
-<1>4. \E v \in Values : \E l \in Learners : \E t \in Time : Learning(l,v,t)
-   BY <1>1, <1>3 DEF Rule_learner  
+<1>3. (\A l \in Learners : (\E t \in Time : Available(l,t))  =>  Rule_learner(l))  
+   BY DEF Assumptions, aBehavior, Learner_behaviour   
+<1>3a. \E t \in Time : state_time = t  
+              /\ \E l \in Learners : Available(l,t)
+              /\ \E v \in Values : \E Q \in Quorums : 
+                \A a \in Q : (\E m \in msgs : (m.type = "2b") 
+                                           /\ (m.val = v) 
+                                           /\ (m.acc = a))
+   BY <1>1, <1>2 DEF Always_available      
+<1>3d. \E t \in Time : state_time = t  
+              /\ \E l \in Learners : Rule_learner(l)
+              /\ \E v \in Values : \E Q \in Quorums : 
+                \A a \in Q : (\E m \in msgs : (m.type = "2b") 
+                                           /\ (m.val = v) 
+                                           /\ (m.acc = a))
+   BY <1>3a, <1>3                                                   
+<1>4. \E t1 \in Time : state_time = t1  
+         /\ \E v \in Values : \E l \in Learners : \E t \in Time : Learning(l,v,t)
+   BY <1>3d DEF Rule_learner  
 <1>5. (\E v \in Values : \E l \in Learners : \E t \in Time : 
                                           (state_time' = t) 
                                        /\ learnt' = [learnt EXCEPT ![l] = v])
@@ -1892,5 +1939,5 @@ Assumptions
 
 =============================================================================
 \* Modification History
-\* Last modified Wed Apr 15 13:42:57 EDT 2020 by pauls
+\* Last modified Sat Apr 25 12:48:11 EDT 2020 by pauls
 \* Created Thu Nov 14 15:15:40 EST 2019 by pauls
