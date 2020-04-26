@@ -436,10 +436,10 @@ Learner_behaviour ==
 (*The following section specifies assumptions for proving progress         *)
 (***************************************************************************)
 
-\* A specific quorum is always available
+\* A specific quorum is always eventually available
 Quorum_always_eventually_available == \E Q \in Quorums : \A a \in Q : Always_eventually_available(a)
 
-\* A learner is always available
+\* A learner is always eventually available
 Learner_always_eventually_available == \E l \in Learners : Always_eventually_available(l)
 
 \*A message that is eventually sent is eventually Delivered
@@ -2064,5 +2064,5 @@ Assumptions
 
 =============================================================================
 \* Modification History
-\* Last modified Sat Apr 25 19:53:46 EDT 2020 by pauls
+\* Last modified Sat Apr 25 20:02:07 EDT 2020 by pauls
 \* Created Thu Nov 14 15:15:40 EST 2019 by pauls
