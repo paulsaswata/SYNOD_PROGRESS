@@ -1348,18 +1348,6 @@ THEOREM Lemma4 ==
                                           /\ m1.bal = b 
                                           /\ Available(a2, t) /\ a2 \in Acceptors
            BY <2>6a
-(*
-      <2>8. \E t \in Time : state_time = t
-           /\ \E b \in Ballots : 
-             \E Q \in Quorums : 
-              \A a2 \in Q : 
-               \E m1 \in msgs : m1.type = "1a" 
-                             /\ m1.prop = P 
-                             /\ m1.bal = b 
-                             /\ maxBal[a2]<m1.bal 
-                             /\ Available(a2,t) /\ a2 \in Acceptors                                                       
-           BY <2>7 DEF Always_available
-*)
       <2>8a. Acceptor_behaviour 
            BY <2>2 DEF aBehavior 
       <2>8b. (\A a \in Acceptors : (\E t \in Time : Available(a,t))  
@@ -1723,32 +1711,7 @@ Assumptions
                     /\ (~(\E m2 \in msgs: m2.type = "1b" /\ m2.prop = P)))
      BY <1>1 DEF msgsPost1a
 <1>2a.  HighestAssertions /\ aAvailability /\ TemporalProperties
-    BY DEF Assumptions, aTypeOk    
-<1>3.  \E P \in Proposers :
-         HighestProposer(P)                   
-       /\  Always_eventually_available(P)  
-       /\ (\E t \in Time : state_time = t 
-                        /\ \E b \in Ballots : 
-                           (\E m \in msgs : m.type = "1a" /\ m.prop = P /\ m.bal = b)
-                    /\ (~(\E m2 \in msgs: m2.type = "1b" /\ m2.prop = P)))      
-    BY <1>2, <1>2a DEF aAvailability,  Highest_prop_always_eventually_available  
-<1>4.  \E P \in Proposers :
-         HighestProposer(P)                   
-       /\ Always_eventually_available(P)  
-       /\ (\E t \in Time : state_time = t 
-                        /\ \E t2 \in Time : (t2 >= t /\ state_time = t2 /\ Available(P,t2)) 
-                        /\ \E b \in Ballots : 
-                        (\E m \in msgs : m.type = "1a" /\ m.prop = P /\ m.bal = b)
-                    /\ (~(\E m2 \in msgs: m2.type = "1b" /\ m2.prop = P)))      
-    BY <1>3 DEF  Always_eventually_available  
-<1>4a.  \E P \in Proposers :
-         HighestProposer(P)                   
-       /\ Always_eventually_available(P)  
-       /\ ( \E t2 \in Time : (state_time = t2 /\ Available(P,t2)) 
-                        /\ \E b \in Ballots : 
-                        (\E m \in msgs : m.type = "1a" /\ m.prop = P /\ m.bal = b)
-                    /\ (~(\E m2 \in msgs: m2.type = "1b" /\ m2.prop = P)))      
-    BY <1>4        
+    BY DEF Assumptions, aTypeOk           
 <1>20.   (\E P \in Proposers : HighestProposer(P)  
             /\ (\E t \in Time : state_time' = t 
                /\ (\E b \in Ballots : 
@@ -1756,7 +1719,7 @@ Assumptions
                     \A a \in Q : 
                      (\E m \in msgs' : 
                        (m.type = "1b") /\ (m.prop = P) /\ (m.acc = a) /\ (m.bal = b)))))
-     BY <1>4a, Lemma4
+     BY <1>2, Lemma4
 <1>21. TemporalProperty3
      BY <1>2a DEF TemporalProperties
 <1>22.\A t \in Time:  \A P \in Proposers: 
@@ -1924,43 +1887,7 @@ Assumptions
                                               /\ m.bal = b /\ m.val = v)))
     BY DEF msgsPost2a
 <1>2.  HighestAssertions /\ aAvailability /\TemporalProperties
-    BY DEF Assumptions, aTypeOk     
-<1>3. (\E P \in Proposers :
-            HighestProposer(P) 
-         /\ Always_eventually_available(P)       
-         /\ (\E t2 \in Time : state_time = t2 
-            /\ \E b \in Ballots :  
-               (\E Q \in Quorums : 
-                 \A a \in Q : \E m \in msgs : (m.type = "1b") /\ (m.bal = b)  
-                                           /\ (m.prop = P) /\ (m.acc = a)) 
-           /\ \E v \in Values : (\E m \in msgs : m.type = "2a" /\ m.prop = P 
-                                              /\ m.bal = b /\ m.val = v)))  
-    BY <1>1, <1>2 DEF aAvailability,  Highest_prop_always_eventually_available 
-<1>3a. (\E P \in Proposers :
-            HighestProposer(P) 
-         /\ Always_eventually_available(P)       
-         /\ (\E t2 \in Time : state_time = t2 
-            /\ \E t3 \in Time : (t3 >= t2 /\ state_time = t3 /\ Available(P,t3))
-            /\ \E b \in Ballots :  
-               (\E Q \in Quorums : 
-                 \A a \in Q : \E m \in msgs : (m.type = "1b") /\ (m.bal = b)  
-                                           /\ (m.prop = P) /\ (m.acc = a)) 
-           /\ \E v \in Values : (\E m \in msgs : m.type = "2a" /\ m.prop = P 
-                                              /\ m.bal = b /\ m.val = v)))  
-    BY <1>3 DEF Always_eventually_available        
-<1>4. (\E P \in Proposers :
-            HighestProposer(P) 
-         /\  Always_eventually_available(P)     
-         /\ (\E t2 \in Time : state_time = t2 
-            /\ Available(P,t2)
-            /\ \E b \in Ballots :  
-               (\E Q \in Quorums : 
-                 \A a \in Q : 
-                  \E m \in msgs : (m.type = "1b") /\ (m.bal = b)  
-                               /\ (m.prop = P) /\ (m.acc = a)) 
-             /\ \E v \in Values : (\E m \in msgs : m.type = "2a" /\ m.prop = P 
-                                                /\ m.bal = b /\ m.val = v)))  
-    BY <1>3a  
+    BY DEF Assumptions, aTypeOk      
 <1>5.(\E P \in Proposers :
          HighestProposer(P)
       /\ (\E t \in Time : state_time' = t 
@@ -1970,7 +1897,7 @@ Assumptions
                              (\E m \in msgs' : (m.type = "2b") 
                                             /\ (m.val = v) 
                                             /\ (m.acc = a)))))                                                      
-    BY <1>4, Lemma5
+    BY <1>1, Lemma5
 <1>6.\A t \in Time:   
          ((state_time' = t 
            /\ \E v \in Values : 
@@ -2064,5 +1991,5 @@ Assumptions
 
 =============================================================================
 \* Modification History
-\* Last modified Sat Apr 25 20:02:07 EDT 2020 by pauls
+\* Last modified Sun Apr 26 13:55:04 EDT 2020 by pauls
 \* Created Thu Nov 14 15:15:40 EST 2019 by pauls
