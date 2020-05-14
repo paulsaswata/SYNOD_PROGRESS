@@ -8,7 +8,7 @@
 * [TLAPS](https://tla.msr-inria.inria.fr/tlaps/content/Home.html) 
 
 ##### DISCLAIMER: 
-Copyright &copy; 2019 Saswata Paul
+Copyright &copy; 2020 Saswata Paul
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
