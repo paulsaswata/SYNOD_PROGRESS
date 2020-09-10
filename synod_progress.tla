@@ -35,19 +35,18 @@ Time == Nat
 (* Some temporal properties                                                *)
 (***************************************************************************)
 \* If all acceptors in a quorum have each delivered a message at separate times, 
-\* there will be a time when all acceptors in the quorum will have 
-\* each delivered the message at a lower time
+\* there will be a time when the system state will contain that message from all acceptors of a quorum
+ 
 TemporalProperty1 ==
 (
 (\E Q \in Quorums : \A a \in Q : \E t \in Time : (state_time' = t) 
                               /\ (\E m \in msgs' :  (m.acc = a)))
 => (\E T \in Time : state_time' = T 
                 /\ (\E Q \in Quorums : 
-                     \A a \in Q : 
-                      \E t \in Time : (T > t) 
-                                   /\ (state_time' = t) 
-                                   /\ (\E m \in msgs' : (m.acc = a))))
+                     \A a \in Q : (\E m \in msgs' : (m.acc = a))))
 )
+
+
 
 \* For all proposers, there is a time when no messages have been sent to or from it
 TemporalProperty2 ==
@@ -266,7 +265,10 @@ Messages ==    [type : {"1a"}, prop : Proposers, bal : Ballots, dTime : Time]
 (*  availability and the behaviour of available agents                     *)
 (***************************************************************************)
 \*Available
-Available(x,t) == TRUE \/ FALSE
+CONSTANT Available(_, _)
+
+ASSUME \A x, t : Available(x,t) \in BOOLEAN
+
 \*Always Available
 Always_available(x) == \A t \in Time : Available(x,t)
 
@@ -1915,5 +1917,5 @@ Assumptions
 
 =============================================================================
 \* Modification History
-\* Last modified Thu Apr 30 23:10:40 EDT 2020 by pauls
+\* Last modified Thu Sep 10 00:16:23 EDT 2020 by pauls
 \* Created Thu Nov 14 15:15:40 EST 2019 by pauls
