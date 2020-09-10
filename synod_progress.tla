@@ -172,10 +172,9 @@ TemporalProperties == TemporalProperty1
 \* it is delivered to all acceptors at the same time. 
 Deliver(m,t) ==  (m.dTime = t) /\ (state_time' = t) /\ (msgs' = msgs \cup {m}) 
 
-\*A message that is sent may or may not be delivered (May get lost)   
-Send(m,t) ==  
-              \/  \E t2 \in Time : (t2 > t) /\ Deliver(m,t2)  
-              \/  \A t2 \in Time : ~ Deliver(m,t2 )
+\*A message that is sent is eventually delivered    
+Send(m,t) == \E t2 \in Time : (t2 > t) /\ Deliver(m,t2)  
+             
             
 (***************************************************************************)
 (* Phase 1a: A leader selects a ballot number b and sends a 1a message     *)
@@ -290,6 +289,10 @@ Learner_always_available == \E l \in Learners : Always_available(l)
 \* of the general form:
 \* Preconditions => Preconditions /\ Action
 
+(***************************************************************************)
+(*Rules for Proposers for Phase1a                                          *)
+(***************************************************************************)
+
 Rule_1a_msg(p) == 
 (\E b \in Ballots :
    (~ \E m \in msgs : m.type = "1a" /\ m.prop = p /\ m.bal = b) )   
@@ -297,6 +300,9 @@ Rule_1a_msg(p) ==
                           /\ (~ \E m \in msgs : (m.type = "1a") 
                                              /\ (m.bal = b) ) 
                           /\  \E t1 \in Time : Phase1a(p,b,t1) )  
+(***************************************************************************)
+(*Rules for Proposers for Phase2a                                          *)
+(***************************************************************************)
 
 Rule_2a_msg(p) ==
 ( \E b \in Ballots :
@@ -318,64 +324,8 @@ Rule_2a_msg(p) ==
 (***************************************************************************)
 (*Rules for Acceptors for Phase1b                                          *)
 (***************************************************************************)
-\*a - if there is only one distinct "1a" message
-Only_single_1a(a) ==
-((*a*)   
-(     (\E m \in msgs : (m.type = "1a") /\ m.bal > maxBal[a])
-  /\ ~(\E m1, m2 \in msgs : (~(m1=m2)) /\ (m1.type = "1a") /\ (m2.type = "1a")))
-=> 
-(\E m \in msgs : (m.type = "1a") /\ m.bal > maxBal[a] 
-                                   /\ \E t \in Time : Phase1b(a,m,t))  
-)(*a*)
 
-\*b - two 1a msgs arrived at the same time
-Multi_1a_simultaneous(a) ==
-((*b*)
-\A P1,P2 \in Proposers :
-( (~(P1=P2)) 
-  /\ \E m1, m2 \in msgs :  (m1.type = "1a") 
-                        /\ (m1.prop = P1) 
-                        /\ (m2.type = "1a") 
-                        /\ (m2.prop = P2) 
-                        /\ (m1.bal>m2.bal) 
-                        /\ (m1.dTime = m2.dTime) 
-                        /\ (m1.bal > maxBal[a]))
-=>
-( (~(P1=P2))
-  /\ \E m1, m2 \in msgs : (m1.type = "1a") 
-                       /\ (m1.prop = P1) 
-                       /\ (m2.type = "1a") 
-                       /\ (m2.prop = P2) 
-                       /\ (m1.bal>m2.bal) 
-                       /\ (m1.dTime = m2.dTime) 
-                       /\ (m1.bal > maxBal[a])
-                       /\ \E t \in Time : Phase1b(a,m1,t))
-)(*b*)
-
-\*b - two 1a msgs arrived at the same time
-Multi_1a_non_simultaneous(a) ==
-((*b*)
-\A P1,P2 \in Proposers :
-( (~(P1=P2)) 
-  /\ \E m1, m2 \in msgs :  (m1.type = "1a") 
-                        /\ (m1.prop = P1) 
-                        /\ (m2.type = "1a") 
-                        /\ (m2.prop = P2) 
-                        /\ (m1.dTime < m2.dTime) 
-                        /\ (m1.bal > maxBal[a]))
-=>
-( (~(P1=P2))
-  /\ \E m1, m2 \in msgs :   (m1.type = "1a") 
-                         /\ (m1.prop = P1) 
-                         /\ (m2.type = "1a") 
-                         /\ (m2.prop = P2) 
-                         /\ (m1.dTime < m2.dTime) 
-                         /\ (m1.bal > maxBal[a])
-                         /\ \E t \in Time : Phase1b(a,m1,t))
-)(*b*)
-
-\* Highest proposal
-General_1b_msg(a) ==
+Rule_1b_msg(a) ==  
 (
 \A P \in Proposers: \A b \in Ballots :
 (\E m \in msgs : (m.type = "1a") 
@@ -389,10 +339,7 @@ General_1b_msg(a) ==
                /\ \E t1 \in Time : Phase1b(a,m,t1))
 )
 
-Rule_1b_msg(a) ==  /\ Only_single_1a(a)
-                   /\ Multi_1a_simultaneous(a)
-                   /\ Multi_1a_non_simultaneous(a)
-                   /\ General_1b_msg(a)
+
 
 (***************************************************************************)
 (*Rules for Acceptors for Phase2b                                          *)
@@ -498,13 +445,13 @@ aNonEmpty ==  (Ballots # {}) \* SInce a proposer has proposed
                              \* the highest ballot, there is at least one ballot
  
 
-\*The type invariant which assumes that all variables are always of the correct type
-aTypeOk == /\ msgs \in SUBSET Messages
-           /\ maxVBal \in [Acceptors -> Ballots \cup {-1}]
-           /\ maxBal \in  [Acceptors -> Ballots \cup {-1}]
-           /\ maxVal \in  [Acceptors -> Values \cup {None}]
-           /\ \A a \in Acceptors : maxBal[a] >= maxVBal[a]
-           /\ \A Q \in Quorums : \A a \in Q : a \in Acceptors
+\*Some properties of the system
+aSysProp ==   (msgs \in SUBSET Messages)
+           /\ (maxVBal \in [Acceptors -> Ballots \cup {-1}])
+           /\ (maxBal \in  [Acceptors -> Ballots \cup {-1}])
+           /\ (maxVal \in  [Acceptors -> Values \cup {None}])
+           /\ (\A a \in Acceptors : maxBal[a] >= maxVBal[a])
+           /\ (\A Q \in Quorums : \A a2 \in Q : a2 \in Acceptors)
            /\ TemporalProperties
  
 (***************************************************************************)
@@ -575,7 +522,7 @@ Assumptions ==
             /\ aDelivery 
             /\ aNonEmpty
             /\ HighestAssertions
-            /\ aTypeOk                     
+            /\ aSysProp                     
                      
 -----------------------------------------------------------------------------               
 (***************************************************************************)
@@ -1003,12 +950,12 @@ LEMMA Lemma3 ==
                                                                  /\ (m.val = v) 
                                                                  /\ (m.acc = a))))
           BY <1>2
-     <2>2. aAvailability /\ aTypeOk
+     <2>2. aAvailability /\ aSysProp
           BY DEF Assumptions
      <2>3. aBehavior     
           BY DEF Assumptions
      <2>4. \A Q \in Quorums: \A a \in Q : a \in Acceptors
-          BY <2>2 DEF aTypeOk
+          BY <2>2 DEF aSysProp
      <2>5. \E Q \in Quorums : \A a \in Q : Always_available(a)
           BY <2>2 DEF aAvailability, Quorum_always_available 
      <2>5a. \E Q \in Quorums : \A a \in Q : \A t \in Time : Available(a,t)
@@ -1026,10 +973,10 @@ LEMMA Lemma3 ==
                           /\ \E Q \in Quorums : \A a \in Q : Rule_2b_msg(a) 
                                                           /\ (maxBal[a]<=b) 
           BY <2>6, <1>1
-     <2>7a. aTypeOk
+     <2>7a. aSysProp
           BY DEF Assumptions
      <2>7b. msgs \in SUBSET Messages
-          BY <2>7a DEF aTypeOk
+          BY <2>7a DEF aSysProp
      <2>7c. \A m \in msgs : m.bal \in Nat
           BY <2>7b DEF Messages, Ballots                       
      <2>8. \E b \in Ballots : \E v \in Values :     
@@ -1153,7 +1100,7 @@ LEMMA Lemma3 ==
      <2>200. QED
             BY <2>18, <2>1
 <1>2a. TemporalProperties
-     BY DEF Assumptions, aTypeOk  
+     BY DEF Assumptions, aSysProp  
 <1>2i. TemporalProperty1
      BY <1>2a DEF TemporalProperties            
 <1>3. (\E t \in Time : state_time' = t 
@@ -1218,7 +1165,7 @@ THEOREM Lemma4 ==
                                                   /\ m1.bal = b 
                                                   /\ maxBal[a]<b) )
     BY <1>2, <1>1 DEF HighestProposerAssertion1         
-<1>3a. aTypeOk 
+<1>3a. aSysProp 
      BY DEF Assumptions                             
 <1>4.      /\ HighestProposer(P)
               /\\E t \in Time : state_time = t
@@ -1250,12 +1197,12 @@ THEOREM Lemma4 ==
                                                                 /\ m1.bal = b 
                                                                 /\ maxBal[a]<m1.bal
           BY <1>4a
-      <2>2. aDelivery /\ aBehavior /\ aAvailability /\ aTypeOk 
+      <2>2. aDelivery /\ aBehavior /\ aAvailability /\ aSysProp 
            BY DEF Assumptions
       <2>3. Quorum_always_available
            BY <2>2 DEF  aAvailability
       <2>4. \A Q \in Quorums : \A a \in Q : a \in Acceptors
-           BY <2>2 DEF aTypeOk
+           BY <2>2 DEF aSysProp
       <2>5. \E Q \in Quorums : \A a \in Q : Always_available(a) /\ a \in Acceptors
            BY <2>3, <2>4 DEF Quorum_always_available
       <2>6. \E t \in Time : state_time = t
@@ -1303,10 +1250,10 @@ THEOREM Lemma4 ==
                      \E m1 \in msgs : m1.type = "1a" /\ m1.prop = P /\ m1.bal = b  
                                     /\ maxBal[a2]<m1.bal 
                                     /\ Available(a2,t) /\ a2 \in Acceptors 
-                                    /\ General_1b_msg(a2)                                                                   
+                                    /\ Rule_1b_msg(a2)                                                                    
            BY <2>9 DEF Rule_1b_msg
       <2>10a. msgs \in SUBSET Messages
-           BY DEF Assumptions, aTypeOk
+           BY DEF Assumptions, aSysProp
       <2>10b. \A m \in msgs :m.bal \in Nat
            BY <2>10a DEF Messages, Ballots     
       <2>11. \E t \in Time : state_time = t
@@ -1314,7 +1261,7 @@ THEOREM Lemma4 ==
                      \E m1 \in msgs : m1.type = "1a" /\ m1.prop = P /\ m1.bal = b 
                                     /\ m1.bal>maxBal[a2] 
                                     /\ Available(a2,t) /\ a2 \in Acceptors 
-                                    /\ General_1b_msg(a2)                                                                   
+                                    /\ Rule_1b_msg(a2)                                                                    
            BY <2>10, <2>10b DEF Nat           
       <2>11a. (\E b \in Ballots : \E Q \in Quorums : \A a2 \in Q : 
                      \E m1 \in msgs : m1.type = "1a" /\ m1.prop = P 
@@ -1329,7 +1276,7 @@ THEOREM Lemma4 ==
                                     /\ m1.bal>maxBal[a2] 
                                     /\ Available(a2,t) /\ a2 \in Acceptors 
                                     /\ \E t1 \in Time : Phase1b(a2,m1,t1)
-           BY <2>11, <2>11a DEF  General_1b_msg                                                                            
+           BY <2>11, <2>11a DEF  Rule_1b_msg                                                                            
       <2>13. \E b \in Ballots : \E Q \in Quorums : \A a2 \in Q : 
                      \E m1 \in msgs : m1.type = "1a" /\ m1.prop = P /\ m1.bal = b 
                                    /\ \E t1 \in Time : Phase1b(a2,m1,t1)                                    
@@ -1389,11 +1336,11 @@ THEOREM Lemma4 ==
                               \E m2 \in msgs' : m2.prop = P 
                                              /\ m2.acc= a 
                                              /\ m2.type = "1b" /\ m2.bal = b 
-           BY <2>19, <1>3a DEF aTypeOk, TemporalProperties, TemporalProperty1                                                              
+           BY <2>19, <1>3a DEF aSysProp, TemporalProperties, TemporalProperty1                                                              
       <2>200. QED
            BY <1>5, <2>20
 <1>5a. TemporalProperties
-     BY DEF Assumptions, aTypeOk  
+     BY DEF Assumptions, aSysProp  
 <1>6. TemporalProperty1
      BY <1>5a DEF TemporalProperties            
 <1>7. (\E t \in Time : state_time' = t 
@@ -1465,7 +1412,7 @@ THEOREM Lemma5 ==
                                                       /\ (m.bal = b) 
                                                       /\ (m.val = v)))
     OBVIOUS    
-<1>4. aTypeOk
+<1>4. aSysProp
     BY DEF Assumptions    
 <1>5. HighestProposer(P) 
        /\ \E b \in Ballots : 
@@ -1488,7 +1435,7 @@ THEOREM Lemma5 ==
                      (\E m \in msgs : (m.type = "2a") /\ (m.prop = P) 
                                    /\ (m.bal = b) /\ (m.val = v) 
                  /\  (\A Q \in Quorums : \A a \in Q :  maxBal[a]<=b ))
-    BY <1>5, <1>4 DEF aTypeOk                                                                                                        
+    BY <1>5, <1>4 DEF aSysProp                                                                                                        
 <1>200. QED
     BY <1>6, Lemma3       
 
@@ -1543,7 +1490,7 @@ Assumptions =>
                            /\ \E t \in Time : state_time = t /\ msgsPost1a(P)                                       
     OBVIOUS
 <1>1. TemporalProperty2 /\ TemporalProperty3
-    BY DEF Assumptions, aTypeOk, TemporalProperties
+    BY DEF Assumptions, aSysProp, TemporalProperties
 <1>2.  HighestAssertions /\ aAvailability
     BY DEF Assumptions 
 <1>3. \E P \in Proposers : HighestProposer(P)
@@ -1611,7 +1558,7 @@ Assumptions
                     /\ (~(\E m2 \in msgs: m2.type = "1b" /\ m2.prop = P)))
      BY <1>1 DEF msgsPost1a
 <1>2a.  HighestAssertions /\ aAvailability /\ TemporalProperties
-    BY DEF Assumptions, aTypeOk         
+    BY DEF Assumptions, aSysProp         
 <1>3.  \E P \in Proposers :
          HighestProposer(P)                   
        /\ Always_available(P)   
@@ -1693,7 +1640,7 @@ Assumptions
                                (m.type = "1b") /\ (m.prop = P) /\ (m.acc = a) /\ (m.bal = b))))
     BY Lemma7 DEF msgsPost1b 
 <1>2.  HighestAssertions /\ aAvailability /\TemporalProperties
-    BY DEF Assumptions, aTypeOk  
+    BY DEF Assumptions, aSysProp  
 <1>3. \E P \in Proposers : HighestProposer(P)
                   /\ Always_available(P)
                   /\ (\E t \in Time : state_time = t 
@@ -1794,7 +1741,7 @@ Assumptions
                                               /\ m.bal = b /\ m.val = v)))
     BY DEF msgsPost2a
 <1>2.  HighestAssertions /\ aAvailability /\TemporalProperties
-    BY DEF Assumptions, aTypeOk  
+    BY DEF Assumptions, aSysProp  
 <1>3. (\E P \in Proposers :
             HighestProposer(P) 
          /\ Always_available(P)     
@@ -1917,5 +1864,5 @@ Assumptions
 
 =============================================================================
 \* Modification History
-\* Last modified Thu Sep 10 00:16:23 EDT 2020 by pauls
+\* Last modified Thu Sep 10 14:37:41 EDT 2020 by pauls
 \* Created Thu Nov 14 15:15:40 EST 2019 by pauls
